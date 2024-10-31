@@ -142,7 +142,7 @@ jobs:
       - uses: actions/checkout@master
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
-        continue-on-error: true # To make sure that SARIF upload gets called
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -205,7 +205,7 @@ jobs:
         run: |
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c 1-7)
           echo "Pushing Docker image with tag: $IMAGE_TAG"
-          docker tag ${{secrets.DOCKER_USERNAME}}/frontend-js:$IMAGE_TAG
+          docker tag frontend-js:$IMAGE_TAG ${{ secrets.DOCKER_USERNAME }}/frontend-js:$IMAGE_TAG
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend-js:$IMAGE_TAG
 
       - name: Install Snyk CLI
