@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ogochukwuozotta/backend-api:$IMAGE_TAG
+          image: ogochukwuozotta/backend-api:{{ .Values.image.tag }}"
           ports:
             - containerPort: 3000
           env:
