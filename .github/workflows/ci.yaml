@@ -204,6 +204,7 @@ jobs:
         run: |
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c 1-7)
           echo "Pushing Docker image with tag: $IMAGE_TAG"
+          docker tag frontend-js:latest ${{secrets.DOCKER_USERNAME}}/frontend-js:$IMAGE_TAG
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend-js:$IMAGE_TAG
 
       - name: Install Snyk CLI
