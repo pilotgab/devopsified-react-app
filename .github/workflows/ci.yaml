@@ -187,6 +187,7 @@ jobs:
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
+
         env:
           GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
 
@@ -204,7 +205,7 @@ jobs:
         run: |
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c 1-7)
           echo "Pushing Docker image with tag: $IMAGE_TAG"
-          docker tag frontend-js:latest ${{secrets.DOCKER_USERNAME}}/frontend-js:$IMAGE_TAG
+          docker tag ${{secrets.DOCKER_USERNAME}}/frontend-js:$IMAGE_TAG
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend-js:$IMAGE_TAG
 
       - name: Install Snyk CLI
@@ -252,6 +253,7 @@ jobs:
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
+          args: "--scanners vuln"
         env:
           GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
 
@@ -304,10 +306,11 @@ jobs:
 
       - name: Updating new image tag in values.yaml file
         env:
-          IMAGE_TAG: ${{ needs.frontend-image.outputs.IMAGE_TAG }}
+        IMAGE_TAG: ${{ needs.frontend-image.outputs.IMAGE_TAG }}
         run: |
           echo "Updating values.yaml with IMAGE_TAG=$IMAGE_TAG"
-          sed -i 's|tag:. *$|tag:'"$IMAGE_TAG"'|' k8s/values.yaml  # Update tag in values.yaml file.
+
+          sed -i 's|tag:.*|tag: '"$IMAGE_TAG"'|' k8s/values.yaml
 
       - name: Commit and Push Changes
         run: |
@@ -327,14 +330,14 @@ jobs:
 
       - name: Retry Commit changes
         id: retry-push-changes
-        if: ${{ steps.push-changes.outcome == 'failure' }}
+        if: ${{ steps.push-changes.conclusion == 'failure' }}
         run: |
           git pull origin main --rebase && git push origin main
 
       - name: Notify on failure
         id: slack
         uses: rtCamp/action-slack-notify@v2
-        if: ${{ failure() && steps.retry-push-changes.conclusion == 'failure'}}
+        if: ${{ failure() && steps.retry-push-changes.conclusion == 'failure' }}
         with:
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           channel: C06S8B0H9DG
