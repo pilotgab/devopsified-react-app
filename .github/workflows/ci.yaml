@@ -180,7 +180,15 @@ jobs:
           echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
           docker build . -t frontend-js:$IMAGE_TAG
 
-      - name: Run Trivy vulnerability scanner on local image
+      - name: Cache Trivy DB
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/trivy
+          key: ${{ runner.os }}-trivy-db
+          restore-keys: |
+            ${{ runner.os }}-trivy-db
+
+      - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: "frontend-js:${{ steps.build_image.outputs.IMAGE_TAG }}"
@@ -195,6 +203,27 @@ jobs:
         run: |
           docker images
 
+      - name: Install Snyk CLI
+        uses: snyk/actions/setup@master
+        with:
+          snyk-token: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk Authenticate
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk Container monitor
+        run: snyk container monitor frontend-js:$IMAGE_TAG --file=quiz-app/Dockerfile
+        working-directory: ./quiz-app
+
+      - name: Run Snyk to check for vulnerabilities in the Docker image
+        uses: snyk/actions/docker@master
+        with:
+          image: frontend-js:$IMAGE_TAG
+          args: --file=quiz-app/Dockerfile --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -208,27 +237,6 @@ jobs:
           docker tag frontend-js:$IMAGE_TAG ${{ secrets.DOCKER_USERNAME }}/frontend-js:$IMAGE_TAG
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend-js:$IMAGE_TAG
 
-      - name: Install Snyk CLI
-        uses: snyk/actions/setup@master
-        with:
-          snyk-token: ${{ secrets.SNYK_TOKEN }}
-
-      - name: Snyk Authenticate
-        run: snyk auth ${{ secrets.SNYK_TOKEN }}
-
-      - name: Snyk Container monitor
-        run: snyk container monitor ${{ secrets.DOCKER_USERNAME }}/frontend-js:$IMAGE_TAG --file=Dockerfile
-        working-directory: ./quiz-app
-
-      - name: Run Snyk to check for vulnerabilities in the Docker image
-        uses: snyk/actions/docker@master
-        with:
-          image: ${{ secrets.DOCKER_USERNAME }}/frontend-js:$IMAGE_TAG
-          args: --file=quiz-app/Dockerfile --severity-threshold=high
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        continue-on-error: true
-
   backend-image:
     needs: [backend-security, frontend-image]
     runs-on: ubuntu-latest
@@ -237,7 +245,8 @@ jobs:
       security-events: write
       actions: read
     steps:
-      - uses: actions/checkout@v4
+      - name: checkout repository
+        uses: actions/checkout@v4
 
       - name: Build backend Docker image
         working-directory: ./backend
@@ -265,12 +274,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
 
-      - name: Push image to Docker Hub
-        run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker tag backend-api:$IMAGE_TAG ${{ secrets.DOCKER_USERNAME }}/backend-api:$IMAGE_TAG
-          docker push ${{ secrets.DOCKER_USERNAME }}/backend-api:$IMAGE_TAG
-
       - name: Install Snyk CLI
         uses: snyk/actions/setup@master
         with:
@@ -280,17 +283,30 @@ jobs:
         run: snyk auth ${{ secrets.SNYK_TOKEN }}
 
       - name: Snyk Container monitor
-        run: snyk container monitor ${{ secrets.DOCKER_USERNAME }}/backend-api:$IMAGE_TAG --file=Dockerfile
+        run: snyk container monitor backend-api:$IMAGE_TAG --file=backend/Dockerfile
         working-directory: ./backend
 
       - name: Run Snyk to check for vulnerabilities in the Docker image
         uses: snyk/actions/docker@master
         with:
-          image: ${{ secrets.DOCKER_USERNAME }}/backend-api:$IMAGE_TAG
-          args: --file=backend/Dockerfile --severity-threshold=high
+          image: backend-api:$IMAGE_TAG
+          args: --file=quiz-app/Dockerfile --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         continue-on-error: true
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push the Docker image
+        run: |
+          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c 1-7)
+          echo "Pushing Docker image with tag: $IMAGE_TAG"
+          docker tag backend-api:$IMAGE_TAG ${{ secrets.DOCKER_USERNAME }}/backend-api:$IMAGE_TAG
+          docker push ${{ secrets.DOCKER_USERNAME }}/backend-api:$IMAGE_TAG
 
   k8s-manifest-scan:
     needs: [frontend-image, backend-image]
