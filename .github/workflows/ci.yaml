@@ -246,6 +246,14 @@ jobs:
         run: |
           docker build . -t backend-api:$IMAGE_TAG
 
+      - name: Cache Trivy DB
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/trivy
+          key: ${{ runner.os }}-trivy-db
+          restore-keys: |
+            ${{ runner.os }}-trivy-db
+
       - name: Run Trivy vulnerability scanner on local image
         uses: aquasecurity/trivy-action@master
         with:
