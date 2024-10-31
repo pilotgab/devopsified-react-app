@@ -114,7 +114,7 @@ jobs:
       - uses: actions/checkout@master
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
-        continue-on-error: true # To make sure that SARIF upload gets called
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -212,7 +212,7 @@ jobs:
         run: snyk auth ${{ secrets.SNYK_TOKEN }}
 
       - name: Snyk Container monitor
-        run: snyk container monitor frontend-js:$IMAGE_TAG --file=quiz-app/Dockerfile -d --experimental
+        run: snyk container monitor "frontend-js:${{ steps.build_image.outputs.IMAGE_TAG }}" --file=quiz-app/Dockerfile -d --experimental
         working-directory: ./quiz-app
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -220,7 +220,7 @@ jobs:
       - name: Run Snyk to check for vulnerabilities in the Docker image
         uses: snyk/actions/docker@master
         with:
-          image: frontend-js:$IMAGE_TAG
+          image: "frontend-js:${{ steps.build_image.outputs.IMAGE_TAG }}"
           args: --file=quiz-app/Dockerfile --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
