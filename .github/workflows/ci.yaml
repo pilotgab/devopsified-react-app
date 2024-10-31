@@ -212,7 +212,7 @@ jobs:
         run: snyk auth ${{ secrets.SNYK_TOKEN }}
 
       - name: Snyk Container monitor
-        run: snyk container monitor "frontend-js:${{ steps.build_image.outputs.IMAGE_TAG }}" --file=quiz-app/Dockerfile -d --experimental
+        run: snyk container monitor "frontend-js:${{ steps.build_image.outputs.IMAGE_TAG }}" --file = ./quiz-app/Dockerfile -d --experimental
         working-directory: ./quiz-app
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
