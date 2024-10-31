@@ -187,6 +187,8 @@ jobs:
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
+        env:
+          GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
 
       - name: Push image to Docker Hub
         run: |
@@ -239,6 +241,8 @@ jobs:
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH"
+        env:
+          GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
 
       - name: Push image to Docker Hub
         run: |
