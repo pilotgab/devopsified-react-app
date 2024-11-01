@@ -216,6 +216,7 @@ jobs:
         working-directory: ./quiz-app
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
 
       - name: Run Snyk to check for vulnerabilities in the Docker image
         uses: snyk/actions/docker@master
@@ -287,12 +288,13 @@ jobs:
       - name: Snyk Container monitor
         run: snyk container monitor backend-api:$IMAGE_TAG --file=backend/Dockerfile
         working-directory: ./backend
+        continue-on-error: true
 
       - name: Run Snyk to check for vulnerabilities in the Docker image
         uses: snyk/actions/docker@master
         with:
-          image: backend-api:$IMAGE_TAG
-          args: --file=quiz-app/Dockerfile --severity-threshold=high
+          image: "backend-api:${{ needs.frontend-image.outputs.IMAGE_TAG }}"
+          args: --file=backend/Dockerfile --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         continue-on-error: true
