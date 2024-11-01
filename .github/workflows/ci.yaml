@@ -5,6 +5,11 @@ on:
   pull_request:
     branches: "master"
 
+permissions:
+  id-token: write
+  contents: write
+  actions: write
+
 jobs:
   frontend-test:
     runs-on: ubuntu-latest
