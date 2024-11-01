@@ -333,6 +333,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Updating new image tag in values.yaml file
+        env:
+          IMAGE_TAG: ${{ needs.frontend-image.outputs.IMAGE_TAG }}"
         run: |
           echo "Updating values.yaml with IMAGE_TAG=$IMAGE_TAG"
           sed -i 's|tag:.*|tag: '"$IMAGE_TAG"'|' k8s/values.yaml
@@ -343,21 +345,21 @@ jobs:
           git config --global user.email "github-actions@github.com"
 
       - name: Stage Changes
-        run: git add deel-app/values.yaml
+        run: git add k8s/values.yaml
 
       - name: Commit Changes
         run: |
-          git diff-index --quiet HEAD || git commit -m "Update image repository and tag to $ECR_REGISTRY:$IMAGE_TAG"
+          git diff-index --quiet HEAD || git commit -m "Update image repository and tag to $$IMAGE_TAG"
 
       - name: Push Changes
         id: push-changes
-        run: git push origin HEAD:main
+        run: git push origin HEAD:master
 
       - name: Retry Commit changes
         id: retry-push-changes
         if: ${{ steps.push-changes.conclusion == 'failure' }}
         run: |
-          git pull origin main --rebase && git push origin main
+          git pull origin master --rebase && git push origin master
 
       - name: Notify on failure
         id: slack
