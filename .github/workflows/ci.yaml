@@ -335,12 +335,40 @@ jobs:
     steps:
       - name: check-out git repository
         uses: actions/checkout@v4
+
       - name: Updating new image tag in values.yaml file
         env:
           IMAGE_TAG: ${{ needs.frontend-image.outputs.IMAGE_TAG }}
         run: |
           echo "Updating values.yaml with IMAGE_TAG=${{ env.IMAGE_TAG }}"
-          sed -i 's|tag:. *$|tag:'"${{ env.IMAGE_TAG }}"'|' k8s/values.yaml
+          sed -i 's|tag:. *$|tag: '"${{ env.IMAGE_TAG }}"'|' k8s/values.yaml
+
+      - name: Stage Changes
+        run: git add k8s/values.yaml
+
+      - name: Commit Changes
+        run: |
+          git diff-index --quiet HEAD || git commit -m "Update image repository and tag to ${IMAGE_TAG}"
+
+      - name: Push Changes
+        id: push-changes
+        run: git push origin HEAD:master
+
+      - name: Retry Commit changes
+        id: retry-push-changes
+        if: ${{ steps.push-changes.conclusion == 'failure' }}
+        run: |
+          git pull origin master --rebase && git push origin master
+
+      - name: Notify on failure
+        id: slack
+        uses: rtCamp/action-slack-notify@v2
+        if: ${{ failure() && steps.retry-push-changes.conclusion == 'failure' }}
+        with:
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          channel: C06S8B0H9DG
+          color: danger
+          message: "GitHub workflow failed for commit ${{ github.event.head_commit.message }} with status ${{ github.workflow.status }}"
 
       - name: Commit and Push Changes
         run: |
@@ -373,4 +401,3 @@ jobs:
           channel: C06S8B0H9DG
           color: danger
           message: "GitHub workflow failed for commit ${{ github.event.head_commit.message }} with status ${{ github.workflow.status }}"
-#
