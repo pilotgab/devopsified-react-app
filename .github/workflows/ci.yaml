@@ -340,8 +340,13 @@ jobs:
 
       - name: Updating new image tag in values.yaml file
         run: |
-          echo "Updating values.yaml with IMAGE_TAG=${IMAGE_TAG}"
-          sed -i 's|tag:.*|tag: '"${IMAGE_TAG}"'|' k8s/values.yaml
+          echo "Updating values.yaml with IMAGE_TAG=${{env.IMAGE_TAG}}"
+          sed -i 's|tag:.*|tag: '"${{env.IMAGE_TAG}}"'|' k8s/values.yaml
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions" 
+          git config --global user.email "github-actions@github.com"
 
       - name: Stage Changes
         run: git add k8s/values.yaml
