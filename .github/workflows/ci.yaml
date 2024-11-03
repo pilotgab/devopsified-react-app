@@ -369,35 +369,3 @@ jobs:
           channel: C06S8B0H9DG
           color: danger
           message: "GitHub workflow failed for commit ${{ github.event.head_commit.message }} with status ${{ github.workflow.status }}"
-
-      - name: Commit and Push Changes
-        run: |
-          git config --global user.name "github-actions" 
-          git config --global user.email "github-actions@github.com"
-
-      - name: Stage Changes
-        run: git add k8s/values.yaml
-
-      - name: Commit Changes
-        run: |
-          git diff-index --quiet HEAD || git commit -m "Update image repository and tag to $$IMAGE_TAG"
-
-      - name: Push Changes
-        id: push-changes
-        run: git push origin HEAD:master
-
-      - name: Retry Commit changes
-        id: retry-push-changes
-        if: ${{ steps.push-changes.conclusion == 'failure' }}
-        run: |
-          git pull origin master --rebase && git push origin master
-
-      - name: Notify on failure
-        id: slack
-        uses: rtCamp/action-slack-notify@v2
-        if: ${{ failure() && steps.retry-push-changes.conclusion == 'failure' }}
-        with:
-          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-          channel: C06S8B0H9DG
-          color: danger
-          message: "GitHub workflow failed for commit ${{ github.event.head_commit.message }} with status ${{ github.workflow.status }}"
