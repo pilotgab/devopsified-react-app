@@ -40,10 +40,8 @@ jobs:
 
       - name: Build
         run: npm run build
-        working-directory:
-          ./quiz-app
+        working-directory: ./quiz-app
 
-          # Setup sonar-scanner
       - name: Setup SonarQube
         uses: warchant/setup-sonar-scanner@v8
 
@@ -337,14 +335,12 @@ jobs:
     steps:
       - name: check-out git repository
         uses: actions/checkout@v4
-
       - name: Updating new image tag in values.yaml file
         env:
-          IMAGE_TAG: ${{ needs.frontend-image.outputs.IMAGE_TAG }}"
+          IMAGE_TAG: ${{ needs.frontend-image.outputs.IMAGE_TAG }}
         run: |
-          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c 1-7)
-          echo "Updating values.yaml with IMAGE_TAG=$IMAGE_TAG"
-          sed -i 's|tag:. *$|tag:'"$IMAGE_TAG"'|' k8s/values.yaml
+          echo "Updating values.yaml with IMAGE_TAG=${{ env.IMAGE_TAG }}"
+          sed -i 's|tag:. *$|tag:'"${{ env.IMAGE_TAG }}"'|' k8s/values.yaml
 
       - name: Commit and Push Changes
         run: |
