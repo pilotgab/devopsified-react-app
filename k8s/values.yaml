@@ -4,7 +4,7 @@ replicaCount: 1
 
 image:
   repository: ogochukwuozotta/frontend-js
-  tag: ""
+  tag: 
   pullPolicy: IfNotPresent
 
 service:
