@@ -333,12 +333,14 @@ jobs:
     needs: k8s-manifest-scan
     runs-on: ubuntu-latest
     steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
       - name: Updating new image tag in values.yaml file
-        env:
-          IMAGE_TAG: ${{ needs.build_image.outputs.IMAGE_TAG }}
         run: |
-          echo "Updating values.yaml with IMAGE_TAG=${{ env.IMAGE_TAG }}"
-          sed -i 's|tag:. *$|tag:'"${{ env.IMAGE_TAG }}"'|' k8s/values.yaml
+          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c 1-7)
+          echo "Updating values.yaml with IMAGE_TAG=${ IMAGE_TAG }"
+          sed -i 's|tag:. *$|tag:'"${ IMAGE_TAG }"'|' k8s/values.yaml
 
       - name: Stage Changes
         run: git add k8s/values.yaml
