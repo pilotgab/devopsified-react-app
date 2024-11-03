@@ -339,8 +339,8 @@ jobs:
       - name: Updating new image tag in values.yaml file
         run: |
           IMAGE_TAG=$(echo $GITHUB_SHA | cut -c 1-7)
-          echo "Updating values.yaml with IMAGE_TAG=${ IMAGE_TAG }"
-          sed -i 's|tag:. *$|tag:'"${ IMAGE_TAG }"'|' k8s/values.yaml
+          echo "Updating values.yaml with IMAGE_TAG=${IMAGE_TAG}"
+          sed -i 's|tag:. *$|tag:'"${IMAGE_TAG}"'|' k8s/values.yaml
 
       - name: Stage Changes
         run: git add k8s/values.yaml
