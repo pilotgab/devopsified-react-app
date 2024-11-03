@@ -332,15 +332,16 @@ jobs:
   update-helm:
     needs: k8s-manifest-scan
     runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: ${{ needs.frontend-image.outputs.IMAGE_TAG }}
     steps:
       - name: checkout repository
         uses: actions/checkout@v4
 
       - name: Updating new image tag in values.yaml file
         run: |
-          IMAGE_TAG=$(echo $GITHUB_SHA | cut -c 1-7)
           echo "Updating values.yaml with IMAGE_TAG=${IMAGE_TAG}"
-          sed -i 's|tag:. *$|tag:'"${IMAGE_TAG}"'|' k8s/values.yaml
+          sed -i 's|tag:.*|tag: '"${IMAGE_TAG}"'|' k8s/values.yaml
 
       - name: Stage Changes
         run: git add k8s/values.yaml
@@ -367,4 +368,5 @@ jobs:
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           channel: C06S8B0H9DG
           color: danger
-          message: "GitHub workflow failed for commit ${{ github.event.head_commit.message }} with status ${{ github.workflow.status }}"
+          message: "GitHub workflow failed for commit ${{ github.event.head_commit.message }} with status ${{ github.workflow.status }}
+###
