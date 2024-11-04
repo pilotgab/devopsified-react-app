@@ -231,7 +231,7 @@ jobs:
 
       - name: Push the Docker image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/frontend-js:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/frontend-js
 
   backend-image:
     needs: [backend-security, frontend-image]
@@ -301,7 +301,7 @@ jobs:
 
       - name: Push the Docker image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/backend-api:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/backend-api
 
   k8s-manifest-scan:
     needs: [frontend-image, backend-image]
