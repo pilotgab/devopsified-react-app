@@ -1,13 +1,12 @@
-# Deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: { { .Values.namespace | default "quiz" } }
+  namespace: quiz
   labels:
     app: frontend
 spec:
-  replicas: { { .Values.replicaCount } }
+  replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -22,24 +21,23 @@ spec:
         app: frontend
     spec:
       containers:
-        - name: frontend
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          env:
-            - name: VITE_REACT_APP_API_URL
-              value: { { .Values.env.VITE_REACT_APP_API_URL | quote } }
-          ports:
-            - containerPort: { { .Values.service.port } }
+      - name: frontend
+        image: ogochukwuozotta/frontend-js:latest
+        env:
+        - name: VITE_REACT_APP_API_URL
+          value: "http://quizapp.cloudcorehub.com/api/questions"
+        ports:
+        - containerPort: 8080
 ---
-# Service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: { { .Values.service.name } }
-  namespace: { { .Values.namespace | default "quiz" } }
+  name: frontend-service
+  namespace: quiz
 spec:
   selector:
     app: frontend
   ports:
-    - port: { { .Values.service.port } }
-      protocol: TCP
-  type: { { .Values.service.type } }
+  - port: 8080
+    protocol: TCP
+  type: ClusterIP
